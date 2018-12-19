@@ -2,7 +2,7 @@ import os
 
 
 # traceback from exceptions that inherit from this class are suppressed
-class CommandLineError(Exception):
+class CommandLineError(RuntimeError):
     """The traceback of all CommandLineError's is supressed when the
     errors occur on the command line to provide a useful command line
     interface.

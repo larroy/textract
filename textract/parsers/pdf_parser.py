@@ -9,13 +9,21 @@ from .utils import ShellParser
 from .image import Parser as TesseractParser
 
 
+def empty_pages_only(txt):
+    if type(txt) is str:
+        return set(list(txt)) == {'\x0c'}
+    elif type(txt) is bytes:
+        return set(map(chr, list(txt))) == {'\x0c'}
+    else:
+        assert False
+
 class Parser(ShellParser):
     """Extract text from pdf files using either the ``pdftotext`` method
     (default) or the ``pdfminer`` method.
     """
 
     def extract(self, filename, method='', **kwargs):
-        if method == '' or method == 'pdftotext':
+        if method == 'pdftotext':
             try:
                 return self.extract_pdftotext(filename, **kwargs)
             except ShellError as ex:
@@ -31,6 +39,11 @@ class Parser(ShellParser):
             return self.extract_pdfminer(filename, **kwargs)
         elif method == 'tesseract':
             return self.extract_tesseract(filename, **kwargs)
+        elif method == '' or method == 'heuristic':
+            text = self.extract_pdftotext(filename, **kwargs)
+            if empty_pages_only(text):
+                text = self.extract_tesseract(filename, **kwargs)
+            return text
         else:
             raise UnknownMethod(method)
 

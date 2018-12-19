@@ -9,8 +9,10 @@ import errno
 
 import six
 import chardet
+import logging
 
 from .. import exceptions
+
 
 
 class BaseParser(object):
@@ -44,8 +46,9 @@ class BaseParser(object):
         # output encoding
         # http://nedbatchelder.com/text/unipain/unipain.html#35
         byte_string = self.extract(filename, **kwargs)
-        unicode_string = self.decode(byte_string)
-        return self.encode(unicode_string, encoding)
+        return byte_string
+        #unicode_string = self.decode(byte_string)
+        #return self.encode(unicode_string, encoding)
 
     def decode(self, text):
         """Decode ``text`` using the `chardet
@@ -61,8 +64,17 @@ class BaseParser(object):
             return u''
 
         # use chardet to automatically detect the encoding text
-        result = chardet.detect(text)
-        return text.decode(result['encoding'])
+        try:
+            result = text.decode('utf-8')
+            return result
+        except UnicodeDecodeError as e:
+            logging.error("UTF-8 decoding error")
+        try:
+            encoding = chardet.detect(text)
+            return text.decode(encoding['encoding'])
+        except UnicodeDecodeError as e:
+            logging.error("%s decoding (chardet detected) error", encoding)
+            return u''
 
 
 class ShellParser(BaseParser):
